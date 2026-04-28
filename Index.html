@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regresi & Bisection | Analisis Data Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+    <style>
+        :root {
+            --bg: #06060f;
+            --surface: rgba(18, 18, 40, 0.7);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-hover: rgba(255, 255, 255, 0.18);
+            --text: #e8e8f0;
+            --text-secondary: #b0b0c8;
+            --text-muted: #7878a0;
+            --accent-1: #a78bfa;
+            --accent-2: #60a5fa;
+            --accent-3: #34d399;
+            --accent-4: #f472b6;
+            --accent-5: #fbbf24;
+            --glow-1: rgba(167, 139, 250, 0.35);
+            --radius: 20px;
+            --radius-sm: 12px;
+            --transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.7;
+        }
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            z-index: 0;
+            animation: orbFloat 18s ease-in-out infinite;
+            will-change: transform;
+        }
+        .orb-1 {
+            width: 450px;
+            height: 450px;
+            background: rgba(167, 139, 250, 0.12);
+            top: -120px;
+            left: -100px;
+        }
+        .orb-2 {
+            width: 350px;
+            height: 350px;
+            background: rgba(96, 165, 250, 0.1);
+            bottom: -100px;
+            right: -80px;
+            animation-delay: -6s;
+            animation-duration: 22s;
+        }
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: rgba(52, 211, 153, 0.08);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -11s;
+            animation-duration: 20s;
+        }
+        @keyframes orbFloat {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(60px, -40px) scale(1.15);
+            }
+            50% {
+                transform: translate(-30px, 50px) scale(0.9);
+            }
+            75% {
+                transform: translate(-50px, -30px) scale(1.1);
+            }
+        }
+        .main-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 20px 28px 60px;
+        }
+        .navbar {
+            position: sticky;
+            top: 16px;
+            z-index: 100;
+            background: var(--surface);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+            transition: var(--transition);
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .nav-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 0 30px var(--glow-1);
+        }
+        .hero {
+            text-align: center;
+            padding: 30px 0 20px;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 4.5vw, 3.2rem);
+            font-weight: 800;
+            letter-spacing: -0.6px;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 300% 300%;
+            animation: gradientShift 6s ease infinite;
+            margin-bottom: 8px;
+        }
+        @keyframes gradientShift {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+        .subtitle {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+        }
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 24px 28px;
+            transition: var(--transition);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .card:hover {
+            border-color: var(--glass-border-hover);
+            box-shadow: 0 8px 45px rgba(0, 0, 0, 0.45), 0 0 50px rgba(167, 139, 250, 0.08);
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .grid-5 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+        }
+        @media (max-width: 1100px) {
+            .grid-5 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 700px) {
+            .grid-5 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        .data-btn {
+            padding: 10px 18px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .data-btn.active {
+            background: rgba(167, 139, 250, 0.2);
+            border-color: rgba(167, 139, 250, 0.5);
+            color: #fff;
+            font-weight: 600;
+        }
+        .model-card {
+            cursor: pointer;
+            text-align: center;
+            padding: 18px 14px;
+            border-radius: var(--radius-sm);
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+        .model-card.selected {
+            border-color: rgba(96, 165, 250, 0.55);
+            background: rgba(96, 165, 250, 0.12);
+        }
+        .model-card.best-model {
+            border: 2px solid rgba(52, 211, 153, 0.5);
+            background: linear-gradient(145deg, rgba(52, 211, 153, 0.2), rgba(96, 165, 250, 0.15));
+        }
+        .best-badge {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: rgba(52, 211, 153, 0.25);
+            color: #34d399;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            background: rgba(18, 18, 40, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 12px 16px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        tbody td {
+            padding: 10px 16px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+        }
+        .input-field {
+            padding: 12px 18px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            min-width: 180px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
+            color: #fff;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+        }
+        .error-card {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .error-item {
+            flex: 1;
+            min-width: 140px;
+            padding: 18px 20px;
+            border-radius: var(--radius-sm);
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            text-align: center;
+        }
+        .error-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 380px;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px 0 10px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            color: #fca5a5;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles-canvas"></canvas>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="main-container">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <div class="nav-logo">📐</div>
+                <span>Regresi<span style="color:var(--accent-1);">Pro</span></span>
+            </div>
+            <span class="nav-badge" style="padding:5px 12px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);">Metode Bisection • 10 Iterasi</span>
+        </nav>
+
+        <div class="hero">
+            <h1>Analisis Regresi & Metode Bisection</h1>
+            <p class="subtitle">Menentukan model terbaik dari 6 dataset, plotting grafik interaktif, dan menyelesaikan pencarian akar dengan <strong>Metode Bisection</strong> 10 iterasi</p>
+        </div>
+
+        <div class="card" style="margin-top:24px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><span>📊</span><strong>Pilih Dataset</strong></div>
+            <div id="data-selector" style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="data-btn active" data-dataset="1">🌱 Data 1 · Tanaman</button>
+                <button class="data-btn" data-dataset="2">🚗 Data 2 · Kendaraan</button>
+                <button class="data-btn" data-dataset="3">☕ Data 3 · Kopi</button>
+                <button class="data-btn" data-dataset="4">📢 Data 4 · Informasi</button>
+                <button class="data-btn" data-dataset="5">🔧 Data 5 · Biaya</button>
+                <button class="data-btn" data-dataset="6">📱 Data 6 · Aplikasi</button>
+            </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:20px;">
+            <div class="card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><span>📋</span><strong>Data Preview</strong></div>
+                <div class="table-wrapper" id="data-table-wrapper">
+                    <table id="data-table">
+                        <thead><tr><th>#</th><th id="th-x">X</th><th id="th-y">Y</th></tr></thead>
+                        <tbody id="data-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><span>📈</span><strong>Plot Grafik</strong></div>
+                <div class="chart-container">
+                    <canvas id="main-chart"></canvas>
+                </div>
+                <div id="chart-fallback" style="display:none;text-align:center;padding:40px;color:var(--text-muted);">⚠️ Gagal memuat grafik. Pastikan koneksi internet stabil untuk mengunduh Chart.js</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><span>🧠</span><strong>Model Regresi</strong><span style="font-size:0.7rem;color:var(--text-muted);">(klik untuk pilih model bisection)</span></div>
+            <div class="grid-5" id="model-cards"></div>
+            <div id="best-model-info" style="margin-top:12px;font-size:0.8rem;color:var(--accent-3);text-align:center;font-weight:500;"></div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><span>🎯</span><strong>Metode Bisection — Cari Nilai X</strong></div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:16px;">Masukkan target nilai <strong id="label-y-target">Y</strong>, sistem akan mencari <strong id="label-x-target">X</strong> menggunakan model terpilih.</p>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+                <input type="number" class="input-field" id="target-y" placeholder="Masukkan target Y..." step="any">
+                <button class="btn btn-primary" id="btn-bisection">⚡ Jalankan Bisection</button>
+                <button class="btn btn-outline" id="btn-auto-target">🎲 Target Otomatis</button>
+            </div>
+            <div id="bisection-result"></div>
+        </div>
+
+        <div class="card" style="margin-top:20px;" id="error-section" hidden>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><span>✅</span><strong>Analisis Error Setelah 10 Iterasi</strong></div>
+            <div class="error-card" id="error-display"></div>
+            <div id="error-interpretation" style="margin-top:16px;padding:16px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--glass-border);font-size:0.85rem;color:var(--text-secondary);line-height:1.7;"></div>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 RegresiPro · Dibuat untuk Tugas Project Kelompok · Metode Numerik</p>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== ERROR HANDLER & FALLBACK ====================
+            window.addEventListener('error', function(e) {
+                console.error('Global error:', e.message);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert';
+                errorDiv.innerHTML =
+                    `<strong>⚠️ Terjadi kesalahan:</strong> ${e.message}. <br>Silakan periksa konsol (F12) dan pastikan koneksi stabil.`;
+                document.body.prepend(errorDiv);
+            });
+
+            // ==================== PARTICLE SYSTEM ====================
+            const canvas = document.getElementById('particles-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const particleCount = 70;
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 1.8 + 0.4;
+                    this.speedY = Math.random() * 0.4 + 0.15;
+                    this.speedX = (Math.random() - 0.5) * 0.25;
+                    this.opacity = Math.random() * 0.5 + 0.2;
+                    this.hue = [250, 210, 160][Math.floor(Math.random() * 3)];
+                }
+                update() {
+                    this.y += this.speedY;
+                    this.x += this.speedX;
+                    if (this.y > canvas.height + 15) { this.y = -10;
+                        this.x = Math.random() * canvas.width; }
+                    if (this.x < -10) this.x = canvas.width + 10;
+                    if (this.x > canvas.width + 10) this.x = -10;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, 70%, 70%, ${this.opacity})`;
+                    ctx.fill();
+                }
+            }
+
+            for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update();
+                    p.draw(); });
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+
+            // ==================== DATA ====================
+            const datasets = {
+                1: {
+                    name: 'Pertumbuhan Tinggi Tanaman',
+                    xLabel: 'Hari',
+                    yLabel: 'Tinggi (cm)',
+                    x: Array.from({ length: 20 }, (_, i) => i + 1),
+                    y: [2, 3.5, 5, 6.8, 8.5, 10, 11.5, 13, 14.2, 15.3, 16.2, 17, 17.7, 18.3, 18.8, 19.2,
+                        19.5, 19.7, 19.9, 20
+                    ],
+                },
+                2: {
+                    name: 'Jumlah Kendaraan',
+                    xLabel: 'Jam',
+                    yLabel: 'Kendaraan',
+                    x: Array.from({ length: 20 }, (_, i) => i + 1),
+                    y: [20, 15, 10, 12, 25, 60, 120, 180, 150, 100, 80, 90, 110, 130, 160, 200, 220, 180,
+                        140, 90
+                    ],
+                },
+                3: {
+                    name: 'Pendinginan Kopi',
+                    xLabel: 'Menit',
+                    yLabel: 'Suhu (°C)',
+                    x: Array.from({ length: 20 }, (_, i) => i + 1),
+                    y: [90, 85, 80, 75, 70, 66, 62, 58, 55, 52, 49, 47, 45, 43, 41, 39, 38, 37, 36, 35],
+                },
+                4: {
+                    name: 'Penyebaran Informasi',
+                    xLabel: 'Hari',
+                    yLabel: 'Orang Tahu',
+                    x: Array.from({ length: 20 }, (_, i) => i + 1),
+                    y: [2, 5, 10, 18, 30, 50, 80, 120, 170, 230, 300, 380, 450, 520, 580, 630, 670, 700,
+                        720, 730
+                    ],
+                },
+                5: {
+                    name: 'Biaya Perawatan',
+                    xLabel: 'Tahun',
+                    yLabel: 'Biaya (Rp ribu)',
+                    x: Array.from({ length: 20 }, (_, i) => i + 1),
+                    y: [50, 55, 63, 75, 90, 110, 135, 165, 200, 240, 285, 335, 390, 450, 515, 585, 660,
+                        740, 825, 915
+                    ],
+                },
+                6: {
+                    name: 'Pengguna Aplikasi',
+                    xLabel: 'Hari',
+                    yLabel: 'Pengguna',
+                    x: Array.from({ length: 20 }, (_, i) => i + 1),
+                    y: [10, 12, 15, 19, 24, 30, 38, 48, 60, 75, 95, 120, 150, 190, 240, 300, 380, 480,
+                        600, 750
+                    ],
+                },
+            };
+
+            let currentDataset = 1;
+            let modelResults = {};
+            let selectedModel = null;
+            let bisectionData = null;
+            let chartInstance = null;
+
+            // DOM refs
+            const dataTableBody = document.getElementById('data-table-body');
+            const thX = document.getElementById('th-x');
+            const thY = document.getElementById('th-y');
+            const modelCardsContainer = document.getElementById('model-cards');
+            const bestModelInfo = document.getElementById('best-model-info');
+            const targetYInput = document.getElementById('target-y');
+            const bisectionResultDiv = document.getElementById('bisection-result');
+            const errorSection = document.getElementById('error-section');
+            const errorDisplay = document.getElementById('error-display');
+            const errorInterpretation = document.getElementById('error-interpretation');
+            const chartFallback = document.getElementById('chart-fallback');
+
+            // ==================== MATH ====================
+            function mean(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+
+            function sum(arr) { return arr.reduce((a, b) => a + b, 0); }
+
+            function sumProd(a, b) { return a.reduce((s, ai, i) => s + ai * b[i], 0); }
+
+            function sumSq(a) { return a.reduce((s, ai) => s + ai * ai, 0); }
+
+            function r2Score(yTrue, yPred) {
+                const yMean = mean(yTrue);
+                const ssRes = yTrue.reduce((s, yi, i) => s + (yi - yPred[i]) ** 2, 0);
+                const ssTot = yTrue.reduce((s, yi) => s + (yi - yMean) ** 2, 0);
+                return ssTot === 0 ? 1 : 1 - ssRes / ssTot;
+            }
+
+            function safeExpReg(x, y, type) {
+                try {
+                    if (type === 'growth') {
+                        const yPos = y.map(v => v <= 0 ? 1e-6 : v);
+                        const lnY = yPos.map(Math.log);
+                        const lr = linReg(x, lnY);
+                        const alpha = Math.exp(lr.b);
+                        const beta = lr.a;
+                        if (!isFinite(alpha) || !isFinite(beta)) throw new Error('Invalid exp growth params');
+                        const fn = (xv) => alpha * Math.exp(beta * xv);
+                        const yPred = x.map(fn);
+                        if (yPred.some(v => !isFinite(v))) throw new Error('Non-finite values');
+                        return { alpha, beta, fn, r2: r2Score(y, yPred), eq: `y = ${alpha.toFixed(4)}·e^(${beta.toFixed(4)}x)` };
+                    }
+                } catch (e) { return null; }
+            }
+
+            function linReg(x, y) {
+                const n = x.length;
+                const sx = sum(x);
+                const sy = sum(y);
+                const sxy = sumProd(x, y);
+                const sx2 = sumSq(x);
+                const denom = n * sx2 - sx * sx;
+                const a = denom !== 0 ? (n * sxy - sx * sy) / denom : 0;
+                const b = denom !== 0 ? (sy - a * sx) / n : mean(y);
+                const fn = (xv) => a * xv + b;
+                const yPred = x.map(fn);
+                return { a, b, fn, r2: r2Score(y, yPred), eq: `y = ${a.toFixed(4)}x + ${b.toFixed(4)}` };
+            }
+
+            function polyReg2(x, y) {
+                try {
+                    const n = x.length;
+                    const sx = sum(x),
+                        sy = sum(y),
+                        sx2 = sumSq(x),
+                        sx3 = sum(x.map(v => v ** 3)),
+                        sx4 = sum(x.map(v => v ** 4));
+                    const sxy = sumProd(x, y),
+                        sx2y = sum(x.map((v, i) => v * v * y[i]));
+                    const A = [
+                        [n, sx, sx2],
+                        [sx, sx2, sx3],
+                        [sx2, sx3, sx4]
+                    ];
+                    const B = [sy, sxy, sx2y];
+                    const det = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) - A[0][1] * (A[1][0] * A[2][2] - A[1][
+                            2
+                        ] * A[2][0]) + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+                    if (Math.abs(det) < 1e-10) throw new Error('Singular matrix');
+                    const inv = [
+                        [(A[1][1] * A[2][2] - A[1][2] * A[2][1]) / det, -(A[0][1] * A[2][2] - A[0][2] * A[2][1]) / det,
+                            (A[0][1] * A[1][2] - A[0][2] * A[1][1]) / det
+                        ],
+                        [-(A[1][0] * A[2][2] - A[1][2] * A[2][0]) / det, (A[0][0] * A[2][2] - A[0][2] * A[2][0]) / det,
+                            -(A[0][0] * A[1][2] - A[0][2] * A[1][0]) / det
+                        ],
+                        [(A[1][0] * A[2][1] - A[1][1] * A[2][0]) / det, -(A[0][0] * A[2][1] - A[0][1] * A[2][0]) / det,
+                            (A[0][0] * A[1][1] - A[0][1] * A[1][0]) / det
+                        ]
+                    ];
+                    const c = inv[0][0] * B[0] + inv[0][1] * B[1] + inv[0][2] * B[2];
+                    const b = inv[1][0] * B[0] + inv[1][1] * B[1] + inv[1][2] * B[2];
+                    const a = inv[2][0] * B[0] + inv[2][1] * B[1] + inv[2][2] * B[2];
+                    const fn = (xv) => a * xv * xv + b * xv + c;
+                    const yPred = x.map(fn);
+                    return { a, b, c, fn, r2: r2Score(y, yPred),
+                    eq: `y = ${a.toFixed(4)}x² + ${b.toFixed(4)}x + ${c.toFixed(4)}` };
+                } catch (e) { return null; }
+            }
+
+            function computeAllModels(x, y) {
+                const results = {};
+                const lin = linReg(x, y);
+                if (lin) results.linear = lin;
+                const poly = polyReg2(x, y);
+                if (poly) results.polynomial = poly;
+
+                try {
+                    const yPos = y.map(v => v > 0 ? v : 1e-6);
+                    const lnY = yPos.map(Math.log);
+                    const lr = linReg(x, lnY);
+                    const alpha = Math.exp(lr.b);
+                    const beta = lr.a;
+                    if (isFinite(alpha) && isFinite(beta)) {
+                        const fn = (xv) => alpha * Math.exp(beta * xv);
+                        const yPred = x.map(fn);
+                        results.expGrowth = { alpha, beta, fn, r2: r2Score(y, yPred),
+                            eq: `y = ${alpha.toFixed(4)}·e^(${beta.toFixed(4)}x)` };
+                    }
+                } catch (e) {}
+
+                try {
+                    const cEst = Math.min(...y) * 0.9;
+                    const yAdj = y.map(v => Math.max(v - cEst, 1e-8));
+                    const lnY = yAdj.map(Math.log);
+                    const lr = linReg(x, lnY);
+                    const aEst = Math.exp(lr.b);
+                    const bEst = -lr.a;
+                    if (isFinite(aEst) && isFinite(bEst) && bEst > 0) {
+                        const fn = (xv) => aEst * Math.exp(-bEst * xv) + cEst;
+                        const yPred = x.map(fn);
+                        results.expDecay = { a: aEst, b: bEst, c: cEst, fn, r2: r2Score(y, yPred),
+                            eq: `y = ${aEst.toFixed(4)}·e^(-${bEst.toFixed(4)}x) + ${cEst.toFixed(4)}` };
+                    }
+                } catch (e) {}
+
+                try {
+                    const aEst = Math.max(...y) * 1.03;
+                    const yRatio = y.map(v => Math.max(1 - v / aEst, 1e-8));
+                    const lnY = yRatio.map(Math.log);
+                    const lr = linReg(x, lnY);
+                    const bEst = -lr.a;
+                    if (isFinite(aEst) && isFinite(bEst) && bEst > 0) {
+                        const fn = (xv) => aEst * (1 - Math.exp(-bEst * xv));
+                        const yPred = x.map(fn);
+                        results.expSaturation = { a: aEst, b: bEst, fn, r2: r2Score(y, yPred),
+                            eq: `y = ${aEst.toFixed(4)}·(1 - e^(-${bEst.toFixed(4)}x))` };
+                    }
+                } catch (e) {}
+
+                return results;
+            }
+
+            // ==================== RENDER ====================
+            function renderDataTable() {
+                const ds = datasets[currentDataset];
+                thX.textContent = ds.xLabel;
+                thY.textContent = ds.yLabel;
+                dataTableBody.innerHTML = ds.x.map((xv, i) => `<tr><td>${i+1}</td><td>${xv}</td><td>${ds.y[i]}</td></tr>`).join('');
+            }
+
+            function renderChart() {
+                if (typeof Chart === 'undefined') {
+                    document.getElementById('main-chart').style.display = 'none';
+                    chartFallback.style.display = 'block';
+                    return;
+                }
+                document.getElementById('main-chart').style.display = 'block';
+                chartFallback.style.display = 'none';
+
+                const ds = datasets[currentDataset];
+                const ctx = document.getElementById('main-chart').getContext('2d');
+                if (chartInstance) chartInstance.destroy();
+
+                const datasetsForChart = [{
+                    label: 'Data Aktual',
+                    data: ds.x.map((xv, i) => ({ x: xv, y: ds.y[i] })),
+                    borderColor: 'rgba(255,255,255,0.7)',
+                    backgroundColor: 'rgba(167,139,250,0.5)',
+                    pointRadius: 5,
+                    borderWidth: 2.5,
+                    tension: 0.3,
+                }];
+
+                const colors = {
+                    linear: 'rgba(96,165,250,0.8)',
+                    polynomial: 'rgba(251,191,36,0.8)',
+                    expGrowth: 'rgba(244,114,182,0.8)',
+                    expDecay: 'rgba(52,211,153,0.8)',
+                    expSaturation: 'rgba(167,139,250,0.8)'
+                };
+
+                if (Object.keys(modelResults).length) {
+                    const xMin = Math.min(...ds.x),
+                        xMax = Math.max(...ds.x);
+                    const xSmooth = [];
+                    for (let xv = xMin; xv <= xMax; xv += (xMax - xMin) / 200) xSmooth.push(xv);
+                    for (const [key, res] of Object.entries(modelResults)) {
+                        if (!res.fn) continue;
+                        const ySmooth = xSmooth.map(xv => res.fn(xv));
+                        if (ySmooth.some(v => !isFinite(v))) continue;
+                        datasetsForChart.push({
+                            label: key,
+                            data: xSmooth.map((xv, i) => ({ x: xv, y: ySmooth[i] })),
+                            borderColor: colors[key] || '#fff',
+                            borderWidth: key === selectedModel ? 3 : 1.5,
+                            borderDash: key === selectedModel ? [] : [6, 3],
+                            pointRadius: 0,
+                            tension: 0.4,
+                        });
+                    }
+                }
+
+                chartInstance = new Chart(ctx, {
+                    type: 'scatter',
+                    data: { datasets: datasetsForChart },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#b0b0c8', usePointStyle: true } } },
+                        scales: {
+                            x: { title: { display: true, text: ds.xLabel, color: '#b0b0c8' },
+                                grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7878a0' } },
+                            y: { title: { display: true, text: ds.yLabel, color: '#b0b0c8' },
+                                grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7878a0' } },
+                        },
+                    },
+                });
+            }
+
+            function renderModelCards() {
+                let bestKey = null,
+                    bestR2 = -Infinity;
+                for (const [key, res] of Object.entries(modelResults)) {
+                    if (res.r2 > bestR2) { bestR2 = res.r2;
+                        bestKey = key; }
+                }
+                selectedModel = bestKey;
+                const icons = { linear: '📏', polynomial: '📐', expGrowth: '🚀', expDecay: '📉', expSaturation: '🔄' };
+                const names = { linear: 'Linear', polynomial: 'Polinomial', expGrowth: 'Eksp. Pertumbuhan',
+                    expDecay: 'Eksp. Peluruhan', expSaturation: 'Eksp. Saturasi' };
+                modelCardsContainer.innerHTML = Object.entries(modelResults).map(([key, res]) => `
+                    <div class="model-card ${key === bestKey ? 'best-model' : ''} ${key === selectedModel ? 'selected' : ''}"
+                         data-model="${key}" onclick="window._selectModel('${key}')">
+                        ${key === bestKey ? '<span class="best-badge">🏆 TERBAIK</span>' : ''}
+                        <div style="font-size:2rem;">${icons[key] || '📊'}</div>
+                        <div style="font-weight:600;">${names[key] || key}</div>
+                        <div style="font-family:'JetBrains Mono';font-size:0.75rem;color:var(--text-muted);">R² = ${res.r2.toFixed(6)}</div>
+                    </div>
+                `).join('');
+                bestModelInfo.innerHTML = `✅ Model terbaik otomatis terpilih: <strong>${names[bestKey]}</strong> (R² = ${bestR2.toFixed(6)})`;
+                document.getElementById('label-y-target').textContent = datasets[currentDataset].yLabel;
+                document.getElementById('label-x-target').textContent = datasets[currentDataset].xLabel;
+            }
+
+            window._selectModel = function(key) {
+                if (!modelResults[key]) return;
+                selectedModel = key;
+                document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+                document.querySelector(`.model-card[data-model="${key}"]`)?.classList.add('selected');
+                renderChart();
+                bisectionResultDiv.innerHTML = '';
+                errorSection.hidden = true;
+            };
+
+            // ==================== BISECTION ====================
+            function bisection(fn, target, a, b, maxIter = 10) {
+                const g = (x) => fn(x) - target;
+                let ga = g(a),
+                    gb = g(b);
+                if (ga * gb > 0) {
+                    for (let expand = 2; expand < 50; expand += 2) {
+                        if (g(a - expand) * gb <= 0) { a = a - expand; break; }
+                        if (ga * g(b + expand) <= 0) { b = b + expand; break; }
+                    }
+                    ga = g(a);
+                    gb = g(b);
+                }
+                if (ga * gb > 0) return { error: true, message: 'Tidak dapat menemukan interval yang mengapit akar.' };
+                const iterations = [];
+                for (let i = 0; i < maxIter; i++) {
+                    const c = (a + b) / 2;
+                    const gc = g(c);
+                    iterations.push({ iter: i + 1, a, b, c, ga, gb, gc, width: Math.abs(b - a) });
+                    if (ga * gc < 0) b = c;
+                    else a = c;
+                    ga = g(a);
+                    gb = g(b);
+                }
+                const finalC = (a + b) / 2;
+                const absError = Math.abs(b - a) / 2;
+                const relError = Math.abs(finalC) > 1e-10 ? (absError / Math.abs(finalC)) * 100 : 0;
+                return { error: false, iterations, finalC, absError, relError };
+            }
+
+            function runBisection() {
+                if (!selectedModel || !modelResults[selectedModel]) return alert('Pilih model terlebih dahulu.');
+                const target = parseFloat(targetYInput.value);
+                if (isNaN(target)) return alert('Masukkan target Y yang valid.');
+                const ds = datasets[currentDataset];
+                const fn = modelResults[selectedModel].fn;
+                const res = bisection(fn, target, Math.min(...ds.x) - 2, Math.max(...ds.x) + 5, 10);
+                bisectionData = res;
+                if (res.error) {
+                    bisectionResultDiv.innerHTML = `<div class="alert">⚠️ ${res.message}</div>`;
+                    errorSection.hidden = true;
+                    return;
+                }
+                bisectionResultDiv.innerHTML = `
+                    <p style="color:var(--accent-3);margin-bottom:8px;">✅ Hasil: <strong>${ds.xLabel} ≈ ${res.finalC.toFixed(6)}</strong> untuk target ${ds.yLabel} = ${target}</p>
+                    <div class="table-wrapper"><table><thead><tr><th>Iter</th><th>a</th><th>b</th><th>c</th><th>g(a)</th><th>g(b)</th><th>g(c)</th><th>|b-a|</th></tr></thead>
+                    <tbody>${res.iterations.map(r => `<tr><td>${r.iter}</td><td>${r.a.toFixed(6)}</td><td>${r.b.toFixed(6)}</td><td><strong>${r.c.toFixed(6)}</strong></td><td>${r.ga.toFixed(8)}</td><td>${r.gb.toFixed(8)}</td><td>${r.gc.toFixed(8)}</td><td>${r.width.toFixed(6)}</td></tr>`).join('')}</tbody></table></div>`;
+                errorSection.hidden = false;
+                errorDisplay.innerHTML = `
+                    <div class="error-item"><div class="error-value">${res.absError.toFixed(8)}</div><div class="error-label">Error Absolut (${ds.xLabel})</div></div>
+                    <div class="error-item"><div class="error-value">${res.relError.toFixed(6)}%</div><div class="error-label">Error Relatif</div></div>`;
+                errorInterpretation.innerHTML = `Interpretasi: Error absolut <strong>${res.absError.toFixed(6)} ${ds.xLabel}</strong> menunjukkan ketelitian estimasi. Error relatif <strong>${res.relError.toFixed(4)}%</strong> menandakan presisi sangat baik dalam konteks ${ds.name.toLowerCase()}.`;
+            }
+
+            function setAutoTarget() {
+                const ds = datasets[currentDataset];
+                const mid = ds.y[10] || 100;
+                targetYInput.value = (mid + (Math.random() - 0.5) * mid * 0.2).toFixed(2);
+            }
+
+            // ==================== EVENT LISTENERS ====================
+            document.getElementById('data-selector').addEventListener('click', e => {
+                const btn = e.target.closest('.data-btn');
+                if (!btn) return;
+                const dsNum = parseInt(btn.dataset.dataset);
+                if (dsNum && dsNum !== currentDataset) {
+                    currentDataset = dsNum;
+                    document.querySelectorAll('.data-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    updateAll();
+                }
+            });
+            document.getElementById('btn-bisection').addEventListener('click', runBisection);
+            document.getElementById('btn-auto-target').addEventListener('click', setAutoTarget);
+            targetYInput.addEventListener('keydown', e => { if (e.key === 'Enter') runBisection(); });
+
+            function updateAll() {
+                try {
+                    const ds = datasets[currentDataset];
+                    modelResults = computeAllModels(ds.x, ds.y);
+                    renderDataTable();
+                    renderModelCards();
+                    renderChart();
+                    bisectionResultDiv.innerHTML = '';
+                    errorSection.hidden = true;
+                    setAutoTarget();
+                } catch (e) {
+                    console.error(e);
+                    document.body.insertAdjacentHTML('afterbegin',
+                        `<div class="alert">Terjadi kesalahan saat memproses dataset: ${e.message}</div>`);
+                }
+            }
+
+            // Inisialisasi
+            updateAll();
+        })();
+    </script>
+</body>
+</html>
